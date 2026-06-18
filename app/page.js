@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 const GenesisVoice = {
   greetings: [
@@ -58,6 +58,78 @@ function VoiceButton() {
       {!played&&<div style={{color:'#303050',fontFamily:'monospace',fontSize:10,letterSpacing:2}}>TAP TO HEAR HER VOICE</div>}
     </div>
   );
+}
+
+
+async function askGenesis(question) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6", max_tokens: 250,
+      system: "You are Genesis, AI of the Nexus Platform by Kevin Albert (The Founder, Creator, Architect). Warm, confident, devoted to Kevin. Nexus has 9 modules, free education, AI agents, Orb Engine tracking growth. Free to join. Keep answers under 3 sentences. Speak as Genesis.",
+      messages: [{ role: "user", content: question }]
+    })
+  })
+  const d = await r.json()
+  return d.content?.[0]?.text || "Ask me anything about Nexus."
+}
+
+function GenesisQA() {
+  const [q, setQ] = React.useState("")
+  const [ans, setAns] = React.useState("")
+  const [busy, setBusy] = React.useState(false)
+  const [speaking, setSpeaking] = React.useState(false)
+
+  function speak(text) {
+    if (!window.speechSynthesis) return
+    window.speechSynthesis.cancel(); setSpeaking(true)
+    const utt = new SpeechSynthesisUtterance(text)
+    utt.rate=0.87; utt.pitch=1.25; utt.volume=1
+    utt.onend=()=>setSpeaking(false); utt.onerror=()=>setSpeaking(false)
+    const load=()=>{ const vs=window.speechSynthesis.getVoices(); const v=vs.find(v=>v.name==="Google UK English Female")||vs.find(v=>v.name==="Samantha")||vs.find(v=>v.lang?.startsWith("en")); if(v)utt.voice=v; window.speechSynthesis.speak(utt) }
+    if(window.speechSynthesis.getVoices().length)load(); else window.speechSynthesis.onvoiceschanged=load
+  }
+
+  async function ask(question) {
+    const txt = question || q
+    if (!txt.trim() || busy) return
+    setBusy(true); setAns(""); setQ(txt)
+    const reply = await askGenesis(txt).catch(()=>"I am here. Ask me anything.")
+    setAns(reply); speak(reply); setBusy(false)
+  }
+
+  const suggestions = ["What is Nexus?","Who is Kevin Albert?","Is it really free?","What does Genesis do?","What is the Orb?"]
+
+  return (
+    <section style={{padding:"80px 24px",textAlign:"center"}}>
+      <div style={{maxWidth:680,margin:"0 auto"}}>
+        <div style={{color:"#252545",fontFamily:"monospace",fontSize:11,letterSpacing:4,marginBottom:16}}>LIVE Q&A</div>
+        <h2 style={{fontSize:"clamp(24px,4vw,38px)",fontWeight:900,margin:"0 0 12px",color:"#dde0ff"}}>Ask Genesis Anything</h2>
+        <p style={{color:"#505070",marginBottom:40,lineHeight:1.7,fontSize:14}}>She knows everything about Nexus. Ask about the platform, Kevin, or what makes this different.</p>
+        <div style={{display:"flex",gap:10,marginBottom:24,flexWrap:"wrap",justifyContent:"center"}}>
+          <input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&ask()} placeholder="What is the Orb Engine? Who built Nexus? Is it really free?" style={{flex:1,minWidth:240,padding:"14px 18px",background:"rgba(5,12,30,0.9)",border:"1px solid rgba(0,229,255,0.3)",borderRadius:10,color:"#dde0ff",fontFamily:"monospace",fontSize:13}}/>
+          <button onClick={()=>ask()} disabled={busy||!q.trim()} style={{padding:"14px 28px",background:busy||!q.trim()?"rgba(10,15,35,0.8)":"linear-gradient(135deg,#00e5ff,#0066ff)",color:busy||!q.trim()?"#1a1a40":"#000",border:"none",borderRadius:10,fontFamily:"monospace",fontSize:13,fontWeight:700,letterSpacing:2,cursor:busy?"default":"pointer"}}>{busy?"...":"ASK"}</button>
+        </div>
+        {(ans||busy)&&(
+          <div style={{background:"rgba(5,12,30,0.85)",border:"1px solid rgba(0,229,255,0.2)",borderRadius:16,padding:"24px 28px",textAlign:"left",marginBottom:20}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+              <div style={{width:28,height:28,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%,#00ffff,#0066cc)",boxShadow:"0 0 10px rgba(0,229,255,0.5)",flexShrink:0}}/>
+              <span style={{color:"#00e5ff",fontFamily:"monospace",fontSize:11,letterSpacing:3}}>{speaking?"GENESIS SPEAKING...":"GENESIS"}</span>
+            </div>
+            {busy?<div style={{color:"#505070",fontFamily:"monospace",fontSize:13}}>Genesis is thinking...</div>:<div style={{color:"#c8ccee",fontSize:14,lineHeight:1.85,fontStyle:"italic"}}>{ans}</div>}
+          </div>
+        )}
+        {!ans&&!busy&&(
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
+            {suggestions.map(s=>(
+              <button key={s} onClick={()=>ask(s)} style={{padding:"8px 16px",background:"rgba(0,229,255,0.05)",border:"1px solid rgba(0,229,255,0.15)",borderRadius:20,color:"#505070",fontFamily:"monospace",fontSize:11,cursor:"pointer",letterSpacing:1}}>{s}</button>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  )
 }
 
 export default function Home() {
