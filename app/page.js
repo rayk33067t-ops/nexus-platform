@@ -194,7 +194,15 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section style={{padding:'80px 24px',textAlign:'center'}}>
+            <section style={{padding:"60px 24px",textAlign:"center"}}>
+        <div style={{maxWidth:680,margin:"0 auto"}}>
+          <div style={{color:"#252545",fontFamily:"monospace",fontSize:11,letterSpacing:4,marginBottom:16}}>LIVE Q&A</div>
+          <h2 style={{fontSize:"clamp(22px,4vw,36px)",fontWeight:900,margin:"0 0 12px",color:"#dde0ff"}}>Ask Genesis Anything</h2>
+          <p style={{color:"#505070",marginBottom:32,lineHeight:1.7,fontSize:14}}>She knows everything about Nexus. Ask about the platform, Kevin, or what makes this different.</p>
+          <GenesisQA/>
+        </div>
+      </section>
+<section style={{padding:'80px 24px',textAlign:'center'}}>
         <div style={{maxWidth:600,margin:'0 auto',background:'rgba(0,229,255,0.03)',border:'1px solid rgba(0,229,255,0.1)',borderRadius:24,padding:'60px 32px'}}>
           <h2 style={{fontSize:'clamp(26px,5vw,44px)',fontWeight:900,margin:'0 0 16px',color:'#dde0ff'}}>Ready to evolve?</h2>
           <p style={{color:'#505070',marginBottom:40,lineHeight:1.7}}>Join the platform building the future.<br/>Free. Forever.</p>
