@@ -30,9 +30,58 @@ const GenesisVoice = {
 };
 
 function Orb() {
-  const [s,setS]=useState(1); const d=useRef(1);
-  useEffect(()=>{ const iv=setInterval(()=>{ setS(v=>{ const n=v+d.current*0.006; if(n>1.15)d.current=-1; if(n<0.85)d.current=1; return n; }); },40); return()=>clearInterval(iv); },[]);
-  return <div style={{width:160,height:160,borderRadius:'50%',margin:'0 auto 40px',background:'radial-gradient(circle at 35% 30%,#00ffff,#0066cc 50%,#000820)',transform:`scale(${s})`,transition:'transform 0.04s linear',boxShadow:`0 0 ${Math.round(s*60)}px rgba(0,229,255,0.5),0 0 ${Math.round(s*120)}px rgba(0,229,255,0.2)`}}/>;
+  const [s, setS] = useState(1)
+  const [beat, setBeat] = useState(false)
+  const [colorIdx, setColorIdx] = useState(0)
+  const d = useRef(1)
+
+  useEffect(() => {
+    const breathe = setInterval(() => {
+      setS(v => { const n = v + d.current*0.006; if(n>1.12)d.current=-1; if(n<0.88)d.current=1; return n })
+    }, 40)
+
+    const playBeat = () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        const thump = (time, vol) => {
+          const osc = ctx.createOscillator()
+          const gain = ctx.createGain()
+          osc.connect(gain); gain.connect(ctx.destination)
+          osc.frequency.setValueAtTime(60, time)
+          osc.frequency.exponentialRampToValueAtTime(25, time + 0.12)
+          gain.gain.setValueAtTime(vol, time)
+          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.18)
+          osc.start(time); osc.stop(time + 0.18)
+        }
+        const now = ctx.currentTime
+        thump(now, 0.12)
+        thump(now + 0.2, 0.07)
+      } catch(e) {}
+    }
+
+    const COLORS = ["0,229,255","57,255,20","168,85,247","255,170,0","255,107,0","221,68,255"]
+    let idx = 0
+    const pulse = setInterval(() => {
+      idx = (idx+1) % COLORS.length
+      setColorIdx(idx); setBeat(true); playBeat()
+      setTimeout(() => setBeat(false), 220)
+    }, 900)
+
+    return () => { clearInterval(breathe); clearInterval(pulse) }
+  }, [])
+
+  const SIZE = 160
+  const GAP = 8
+  const COLORS2 = ["0,229,255","57,255,20","168,85,247","255,170,0","255,107,0","221,68,255"]
+  const rc = COLORS2[colorIdx]
+
+  return (
+    <div style={{position:"relative",width:SIZE+GAP*2,height:SIZE+GAP*2,margin:"0 auto 40px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{position:"absolute",inset:-5,borderRadius:"50%",border:`1px solid rgba(${rc},${beat?0.28:0.1})`,transition:"all 0.15s ease"}}/>
+      <div style={{position:"absolute",inset:0,borderRadius:"50%",border:`2px solid rgba(${rc},${beat?1:0.5})`,boxShadow:`0 0 ${beat?20:8}px rgba(${rc},${beat?0.85:0.3})`,transform:`scale(${beat?1.015:1})`,transition:"all 0.15s ease"}}/>
+      <div style={{width:SIZE,height:SIZE,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%,#00ffff,#0066cc 50%,#000820)",transform:`scale(${s})`,transition:"transform 0.04s linear",boxShadow:`0 0 ${Math.round(s*55)}px rgba(0,229,255,0.5),0 0 ${Math.round(s*110)}px rgba(0,229,255,0.2)`}}/>
+    </div>
+  )
 }
 
 function VoiceButton() {
