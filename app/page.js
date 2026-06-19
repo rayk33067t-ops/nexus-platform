@@ -33,33 +33,58 @@ function Orb() {
   const [s, setS] = useState(1)
   const [beat, setBeat] = useState(false)
   const [colorIdx, setColorIdx] = useState(0)
+  const [rotation, setRotation] = useState(0)
   const d = useRef(1)
+  const audioCtxRef = useRef(null)
+  const unlockedRef = useRef(false)
 
   useEffect(() => {
+    const unlock = () => {
+      if (unlockedRef.current) return
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        audioCtxRef.current = ctx
+        const buffer = ctx.createBuffer(1, 1, 22050)
+        const source = ctx.createBufferSource()
+        source.buffer = buffer
+        source.connect(ctx.destination)
+        source.start(0)
+        unlockedRef.current = true
+      } catch(e) {}
+    }
+    window.addEventListener('touchstart', unlock, { once: true })
+    window.addEventListener('click', unlock, { once: true })
+
     const breathe = setInterval(() => {
       setS(v => { const n = v + d.current*0.006; if(n>1.12)d.current=-1; if(n<0.88)d.current=1; return n })
     }, 40)
 
+    const spin = setInterval(() => {
+      setRotation(r => (r + 0.15) % 360)
+    }, 40)
+
     const playBeat = () => {
+      if (!unlockedRef.current || !audioCtxRef.current) return
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        const ctx = audioCtxRef.current
         const thump = (time, vol) => {
           const osc = ctx.createOscillator()
           const gain = ctx.createGain()
           osc.connect(gain); gain.connect(ctx.destination)
-          osc.frequency.setValueAtTime(60, time)
-          osc.frequency.exponentialRampToValueAtTime(25, time + 0.12)
+          osc.type = 'sine'
+          osc.frequency.setValueAtTime(80, time)
+          osc.frequency.exponentialRampToValueAtTime(35, time + 0.15)
           gain.gain.setValueAtTime(vol, time)
-          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.18)
-          osc.start(time); osc.stop(time + 0.18)
+          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.25)
+          osc.start(time); osc.stop(time + 0.25)
         }
         const now = ctx.currentTime
-        thump(now, 0.12)
-        thump(now + 0.2, 0.07)
+        thump(now, 0.3)
+        thump(now + 0.22, 0.18)
       } catch(e) {}
     }
 
-    const COLORS = ["0,229,255","57,255,20","168,85,247","255,170,0","255,107,0","221,68,255"]
+    const COLORS = ['0,229,255','57,255,20','168,85,247','255,170,0','255,107,0','221,68,255']
     let idx = 0
     const pulse = setInterval(() => {
       idx = (idx+1) % COLORS.length
@@ -67,19 +92,42 @@ function Orb() {
       setTimeout(() => setBeat(false), 220)
     }, 900)
 
-    return () => { clearInterval(breathe); clearInterval(pulse) }
+    return () => {
+      clearInterval(breathe); clearInterval(spin); clearInterval(pulse)
+      window.removeEventListener('touchstart', unlock)
+      window.removeEventListener('click', unlock)
+    }
   }, [])
 
   const SIZE = 160
-  const GAP = 8
-  const COLORS2 = ["0,229,255","57,255,20","168,85,247","255,170,0","255,107,0","221,68,255"]
+  const COLORS2 = ['0,229,255','57,255,20','168,85,247','255,170,0','255,107,0','221,68,255']
   const rc = COLORS2[colorIdx]
 
   return (
-    <div style={{position:"relative",width:SIZE+GAP*2,height:SIZE+GAP*2,margin:"0 auto 40px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{position:"absolute",inset:-5,borderRadius:"50%",border:`1px solid rgba(${rc},${beat?0.28:0.1})`,transition:"all 0.15s ease",zIndex:1}}/>
-      <div style={{position:"absolute",inset:0,borderRadius:"50%",border:`2px solid rgba(${rc},${beat?1:0.5})`,boxShadow:`0 0 ${beat?20:8}px rgba(${rc},${beat?0.85:0.3})`,transform:`scale(${beat?1.015:1})`,transition:"all 0.15s ease",zIndex:1}}/>
-      <div style={{width:SIZE,height:SIZE,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%,#00ffff,#0066cc 50%,#000820)",transform:`scale(${s})`,transition:"transform 0.04s linear",boxShadow:`0 0 ${Math.round(s*55)}px rgba(0,229,255,0.5),0 0 ${Math.round(s*110)}px rgba(0,229,255,0.2)`}}/>
+    <div style={{position:'relative', width:240, height:240, margin:'0 auto 40px', display:'flex', alignItems:'center', justifyContent:'center', perspective:'600px'}}>
+      <div style={{
+        position:'absolute', width:SIZE+60, height:SIZE+60, borderRadius:'50%',
+        background:`radial-gradient(circle, rgba(${rc},${beat?0.18:0.05}) 0%, transparent 70%)`,
+        transition:'background 0.3s ease',
+        zIndex:0,
+      }}/>
+      <div style={{
+        position:'absolute', width:SIZE+34, height:SIZE+34, borderRadius:'50%',
+        border:`1px solid rgba(${rc},${beat?0.4:0.12})`,
+        filter:'blur(1px)',
+        transition:'border-color 0.3s ease, opacity 0.3s ease',
+        opacity:beat?1:0.6,
+        zIndex:0,
+      }}/>
+      <div style={{
+        position:'relative', width:SIZE, height:SIZE*0.96, borderRadius:'48% 52% 50% 50% / 51% 49% 51% 49%',
+        background:'radial-gradient(circle at 35% 30%,#00ffff,#0066cc 50%,#000820)',
+        transform:`scale(${s}) rotate3d(1, 1, 0, 45deg) rotateZ(${rotation}deg)`,
+        transformStyle:'preserve-3d',
+        transition:'transform 0.04s linear',
+        boxShadow:`0 0 ${Math.round(s*55)}px rgba(0,229,255,0.5), 0 0 ${Math.round(s*110)}px rgba(0,229,255,0.2)`,
+        zIndex:2,
+      }}/>
     </div>
   )
 }
