@@ -97,7 +97,7 @@ function GenesisQA() {
   async function ask(question) {
     const txt = (question || q).trim()
     if (!txt || busy) return
-    setQ(txt); setBusy(true); se
+    setQ(txt); setBusy(true); setAns(""); fetch("/api/genesis", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:txt})}).then(r=>r.json()).then(data=>{const reply=data.answer||"I am Genesis. Ask me anything.";setAns(reply);speak(reply);}).catch(()=>setAns("I am Genesis. Ask me anything about Nexus.")).finally(()=>setBusy(false));
 
 
 export default function Home() {
