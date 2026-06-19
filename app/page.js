@@ -81,7 +81,7 @@ function GenesisQA() {
     if (!window.speechSynthesis) return
     window.speechSynthesis.cancel(); setSpeaking(true)
     const utt = new SpeechSynthesisUtterance(text)
-    utt.rate=0.87; utt.pitch=1.25; utt.volume=1
+    const isReflective = text.includes("?") ; utt.rate = isReflective ? 0.93 : 0.95; utt.pitch = isReflective ? 1.08 : 1.02; utt.volume = 1
     utt.onend=()=>setSpeaking(false); utt.onerror=()=>setSpeaking(false)
     const load=()=>{ const vs=window.speechSynthesis.getVoices(); const v=vs.find(v=>v.name==="Google UK English Female")||vs.find(v=>v.name==="Samantha")||vs.find(v=>v.lang?.startsWith("en")); if(v)utt.voice=v; window.speechSynthesis.speak(utt) }
     if(window.speechSynthesis.getVoices().length)load(); else window.speechSynthesis.onvoiceschanged=load
