@@ -77,8 +77,8 @@ function Orb() {
 
   return (
     <div style={{position:"relative",width:SIZE+GAP*2,height:SIZE+GAP*2,margin:"0 auto 40px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{position:"absolute",inset:-5,borderRadius:"50%",border:`1px solid rgba(${rc},${beat?0.28:0.1})`,transition:"all 0.15s ease"}}/>
-      <div style={{position:"absolute",inset:0,borderRadius:"50%",border:`2px solid rgba(${rc},${beat?1:0.5})`,boxShadow:`0 0 ${beat?20:8}px rgba(${rc},${beat?0.85:0.3})`,transform:`scale(${beat?1.015:1})`,transition:"all 0.15s ease"}}/>
+      <div style={{position:"absolute",inset:-5,borderRadius:"50%",border:`1px solid rgba(${rc},${beat?0.28:0.1})`,transition:"all 0.15s ease",zIndex:1}}/>
+      <div style={{position:"absolute",inset:0,borderRadius:"50%",border:`2px solid rgba(${rc},${beat?1:0.5})`,boxShadow:`0 0 ${beat?20:8}px rgba(${rc},${beat?0.85:0.3})`,transform:`scale(${beat?1.015:1})`,transition:"all 0.15s ease",zIndex:1}}/>
       <div style={{width:SIZE,height:SIZE,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%,#00ffff,#0066cc 50%,#000820)",transform:`scale(${s})`,transition:"transform 0.04s linear",boxShadow:`0 0 ${Math.round(s*55)}px rgba(0,229,255,0.5),0 0 ${Math.round(s*110)}px rgba(0,229,255,0.2)`}}/>
     </div>
   )
